@@ -11,7 +11,7 @@ import com.adyen.service.exception.ApiException
 fun main() {
     val xApiKey = System.getenv("ADYEN_API_KEY")
     val merchantAccount = System.getenv("ADYEN_MERCHANT_ACCOUNT")
-    val sendCardEncrypted: Boolean = true
+    val sendCardEncrypted: Boolean = false
 
     try {
         val response: PaymentsResponse = Checkout(
