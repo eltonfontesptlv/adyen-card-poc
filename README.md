@@ -9,5 +9,5 @@
 </ul>
 
 # Environment variables
-ADYEN_API_KEY
+ADYEN_API_KEY <br />
 ADYEN_MERCHANT_ACCOUNT
