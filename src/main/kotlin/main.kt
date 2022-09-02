@@ -7,11 +7,13 @@ import com.adyen.model.checkout.PaymentsResponse
 import com.adyen.model.checkout.details.CardDetails
 import com.adyen.service.Checkout
 import com.adyen.service.exception.ApiException
+import encrypter.ClientSideEncrypter
 
 fun main() {
     val xApiKey = System.getenv("ADYEN_API_KEY")
+    val publicKey = System.getenv("ADYEN_PUBLIC_KEY")
     val merchantAccount = System.getenv("ADYEN_MERCHANT_ACCOUNT")
-    val sendCardEncrypted: Boolean = false
+    val sendCardEncrypted = true
 
     try {
         val response: PaymentsResponse = Checkout(
@@ -43,12 +45,14 @@ fun main() {
 
 fun Card.details(encrypted: Boolean = false): CardDetails =
     if (encrypted) {
+        val publicKey = System.getenv("ADYEN_PUBLIC_KEY")
+        val card = CardEncrypted(publicKey)
         CardDetails()
             .type("scheme")
-            .encryptedCardNumber("test_4111111111111111")
-            .encryptedExpiryMonth("test_03")
-            .encryptedExpiryYear("test_2030")
-            .encryptedSecurityCode("test_737")
+            .encryptedCardNumber(card.serialize("4111111111111111"))
+            .encryptedExpiryMonth(card.serialize("03"))
+            .encryptedExpiryYear(card.serialize("2030"))
+            .encryptedSecurityCode(card.serialize("737"))
     } else {
         CardDetails()
             .type("scheme")
@@ -58,3 +62,19 @@ fun Card.details(encrypted: Boolean = false): CardDetails =
             .holderName("John Smith")
             .cvc("737")
     }
+
+class CardEncrypted(publicKey: String) {
+    private var client: ClientSideEncrypter? = null
+    private var encryptedCard = ""
+
+    init {
+        client = ClientSideEncrypter(publicKey)
+    }
+
+    fun serialize(data: String): String? {
+        this.encryptedCard += data
+        return client?.encrypt(data)
+    }
+
+    fun builder(): String? = serialize(this.encryptedCard)
+}
