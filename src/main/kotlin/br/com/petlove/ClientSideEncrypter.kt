@@ -1,28 +1,14 @@
-package encrypter
+package br.com.petlove
 
-import encrypter.exception.EncrypterException
+import br.com.petlove.exception.EncrypterException
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-
-import java.math.BigInteger;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.PublicKey;
-import java.security.SecureRandom;
-import java.security.Security
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.RSAPublicKeySpec;
+import java.math.BigInteger
+import java.security.*
+import java.security.spec.InvalidKeySpecException
+import java.security.spec.RSAPublicKeySpec
 import java.util.*
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.KeyGenerator;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.*
+import javax.crypto.spec.IvParameterSpec
 
 class ClientSideEncrypter(publicKeyString: String) {
     private var pubKey: PublicKey? = null
@@ -32,8 +18,7 @@ class ClientSideEncrypter(publicKeyString: String) {
 
     init {
         Security.addProvider(BouncyCastleProvider())
-        val keyComponents = publicKeyString.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }
-            .toTypedArray()
+        val keyComponents = publicKeyString.split("\\|".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         val keyFactory: KeyFactory = KeyFactory.getInstance("RSA")
         val pubKeySpec = RSAPublicKeySpec(
             BigInteger(keyComponents[1].lowercase(Locale.getDefault()), 16),
@@ -69,10 +54,10 @@ class ClientSideEncrypter(publicKeyString: String) {
     fun encrypt(plainText: String): String {
         val aesKey = generateAESKey(256)
         val iv = generateIV(12)
-        val encrypted: ByteArray
-        try {
-            aesCipher?.init(Cipher.ENCRYPT_MODE, aesKey, IvParameterSpec(iv))
-            encrypted = aesCipher?.doFinal(plainText.toByteArray()) ?: throw EncrypterException("Error", null)
+        val encrypted: ByteArray = try {
+            aesCipher!!.init(Cipher.ENCRYPT_MODE, aesKey, IvParameterSpec(iv))
+            // getBytes is UTF-8 on Android by default
+            aesCipher!!.doFinal(plainText.toByteArray())
         } catch (e: IllegalBlockSizeException) {
             throw EncrypterException("Incorrect AES Block Size", e)
         } catch (e: BadPaddingException) {
@@ -83,12 +68,22 @@ class ClientSideEncrypter(publicKeyString: String) {
             throw EncrypterException("Invalid AES Parameters", e)
         }
         val result = ByteArray(iv.size + encrypted.size)
+        // copy IV to result
         System.arraycopy(iv, 0, result, 0, iv.size)
+        // copy encrypted to result
         System.arraycopy(encrypted, 0, result, iv.size, encrypted.size)
         val encryptedAESKey: ByteArray
         return try {
-            encryptedAESKey = rsaCipher.doFinal(aesKey.encoded)
-            PREFIX + VERSION + SEPARATOR + Base64.getEncoder().encode(encryptedAESKey) + SEPARATOR + Base64.getEncoder().encode(result)
+            encryptedAESKey = rsaCipher!!.doFinal(aesKey.encoded)
+            String.format(
+                "%s%s%s%s%s%s",
+                PREFIX,
+                VERSION,
+                SEPARATOR,
+                Base64.getEncoder().encodeToString(encryptedAESKey),
+                SEPARATOR,
+                Base64.getEncoder().encodeToString(result)
+            )
         } catch (e: IllegalBlockSizeException) {
             throw EncrypterException("Incorrect RSA Block Size", e)
         } catch (e: BadPaddingException) {
@@ -98,19 +93,22 @@ class ClientSideEncrypter(publicKeyString: String) {
 
     @Throws(EncrypterException::class)
     private fun generateAESKey(keySize: Int): SecretKey {
-        val kgen: KeyGenerator? = try {
-            KeyGenerator.getInstance("AES")
+        val kgen: KeyGenerator?
+        try {
+            kgen = KeyGenerator.getInstance("AES")
         } catch (e: NoSuchAlgorithmException) {
             throw EncrypterException("Unable to get AES algorithm", e)
         }
-        kgen?.init(keySize)
-        if (kgen != null) {
-            return kgen.generateKey()
-        }
-
-        throw EncrypterException("Unable to get AES algorithm", null)
+        kgen.init(keySize)
+        return kgen.generateKey()
     }
 
+    /**
+     * Generate a random Initialization Vector (IV)
+     *
+     * @param ivSize
+     * @return the IV bytes
+     */
     @Synchronized
     private fun generateIV(ivSize: Int): ByteArray {
         val iv = ByteArray(ivSize)
@@ -119,8 +117,8 @@ class ClientSideEncrypter(publicKeyString: String) {
     }
 
     companion object {
-        private const val PREFIX = "adyenan"
-        private const val VERSION = "0_1_1"
+        private const val PREFIX = "adyenjs"
+        private const val VERSION = "_0_1_18"
         private const val SEPARATOR = "$"
     }
 }

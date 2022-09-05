@@ -5,14 +5,15 @@ plugins {
     kotlin("jvm") version "1.7.10"
 }
 
-group = "poc-hub-payments.br.com.petlove"
+group = "br.com.petlove"
+version = "1.0"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation("com.adyen:adyen-java-api-library:$adyenVersion")
+    implementation("org.json:json:20220320")
     implementation("org.bouncycastle:bcprov-jdk15on:1.47")
     runtimeOnly("ch.qos.logback.contrib:logback-json-classic:$logBackVersion")
     runtimeOnly("ch.qos.logback.contrib:logback-jackson:$logBackVersion")
