@@ -17,8 +17,22 @@ fun main() {
         card.expiryYear = "2030"
         card.generationTime = Date()
 
+        val number = card.serializeParam("number", "2222400010000008", publicKey)
+        val cardHolderName = card.serializeParam("cardHolderName", "John Doe", publicKey)
+        val cvc = card.serializeParam("cvc", "737", publicKey)
+        val expiryMonth = card.serializeParam("expiryMonth", "03", publicKey)
+        val expiryYear = card.serializeParam("expiryYear", "2030", publicKey)
+
         val encryptedCard = card.serialize(publicKey)
+        println("Classic Version 68:")
         println(encryptedCard)
+        println("---------------------------")
+        println("API Version 69:")
+        println("Number: $number")
+        println("Holder Name: $cardHolderName")
+        println("CVC: $cvc")
+        println("Expiry Month: $expiryMonth")
+        println("Expiry Year: $expiryYear")
     } catch (ex: Exception) {
         println(ex.localizedMessage)
     }
@@ -42,6 +56,19 @@ class Card {
             cardJson.put("cvc", cvc)
             cardJson.put("expiryMonth", expiryMonth)
             cardJson.put("expiryYear", expiryYear)
+            encryptedData = encryptData(cardJson.toString(), publicKey)
+        } catch (e: JSONException) {
+            println(e.message)
+        }
+        return encryptedData
+    }
+
+    fun serializeParam(param: String, value: String, publicKey: String): String? {
+        val cardJson = JSONObject()
+        var encryptedData: String? = null
+        try {
+            cardJson.put("generationtime", GENERATION_DATE_FORMAT.format(generationTime))
+            cardJson.put(param, value)
             encryptedData = encryptData(cardJson.toString(), publicKey)
         } catch (e: JSONException) {
             println(e.message)
