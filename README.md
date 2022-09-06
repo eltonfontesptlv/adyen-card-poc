@@ -9,4 +9,6 @@
 </ul>
 
 # Environment variables
-ADYEN_PUBLIC_KEY
+ADYEN_PUBLIC_KEY<br />
+ADYEN_API_KEY<br />
+ADYEN_MERCHANT_ACCOUNT
