@@ -15,6 +15,7 @@ repositories {
 dependencies {
     implementation("org.json:json:20220320")
     implementation("org.bouncycastle:bcprov-jdk15on:1.47")
+    implementation("com.adyen:adyen-java-api-library:$adyenVersion")
     runtimeOnly("ch.qos.logback.contrib:logback-json-classic:$logBackVersion")
     runtimeOnly("ch.qos.logback.contrib:logback-jackson:$logBackVersion")
     runtimeOnly("ch.qos.logback:logback-classic")
