@@ -9,24 +9,25 @@ fun main() {
     val publicKey = System.getenv("ADYEN_PUBLIC_KEY")
 
     try {
-        val card = Card()
+        val card = Card(publicKey)
         card.number = "2222400010000008"
         card.cardHolderName = "John Doe"
         card.cvc = "737"
         card.expiryMonth = "03"
         card.expiryYear = "2030"
         card.generationTime = Date()
+        val encryptedCard = card.serialize()
 
-        val number = card.serializeParam("number", "2222400010000008", publicKey)
-        val cardHolderName = card.serializeParam("cardHolderName", "John Doe", publicKey)
-        val cvc = card.serializeParam("cvc", "737", publicKey)
-        val expiryMonth = card.serializeParam("expiryMonth", "03", publicKey)
-        val expiryYear = card.serializeParam("expiryYear", "2030", publicKey)
-
-        val encryptedCard = card.serialize(publicKey)
         println("Classic Version 68:")
         println(encryptedCard)
         println("---------------------------")
+
+        val number = card.serializeParam("number", card.number!!)
+        val cardHolderName = card.serializeParam("cardHolderName", card.cardHolderName!!)
+        val cvc = card.serializeParam("cvc", card.cvc!!)
+        val expiryMonth = card.serializeParam("expiryMonth", card.expiryMonth!!)
+        val expiryYear = card.serializeParam("expiryYear", card.expiryYear!!)
+
         println("API Version 69:")
         println("Number: $number")
         println("Holder Name: $cardHolderName")
@@ -38,7 +39,7 @@ fun main() {
     }
 }
 
-class Card {
+class Card(private var publicKey: String) {
     var number: String? = null
     var expiryMonth: String? = null
     var expiryYear: String? = null
@@ -46,7 +47,7 @@ class Card {
     var cvc: String? = null
     var generationTime: Date? = null
 
-    fun serialize(publicKey: String): String? {
+    fun serialize(): String? {
         val cardJson = JSONObject()
         var encryptedData: String? = null
         try {
@@ -63,7 +64,7 @@ class Card {
         return encryptedData
     }
 
-    fun serializeParam(param: String, value: String, publicKey: String): String? {
+    fun serializeParam(param: String, value: String): String? {
         val cardJson = JSONObject()
         var encryptedData: String? = null
         try {
